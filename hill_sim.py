@@ -36,10 +36,6 @@ from sklearn import datasets
 from sklearn.metrics import r2_score
 import csv
 
-
-# In[27]:
-
-
 def get_reactors(reac):
     reac_split = reac.split(' ')
     reactors = []
@@ -47,10 +43,6 @@ def get_reactors(reac):
         if k != '&' and k!= '=>':
             reactors.append(k)
     return reactors[:-1]
-
-
-# In[28]:
-
 
 def Hill(reactor, n, EC50):
     B = (EC50**n-1)/(2*EC50**n-1)
@@ -61,20 +53,13 @@ def Hill(reactor, n, EC50):
     else:
         return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
 
-
-# In[29]:
-
-
-# def Ficks(c, x, D):
-    # Assuming c and x are numpy arrays of equal size and D is a scalar
- #   deltaC = np.diff(c)
- #   deltaX = np.diff(x)
-
- #  return -D * deltaC / deltaX
-
-
-# In[30]:
-
+# def Ficks(reaction_duct[node_ID[i]]):
+#     Assuming c and x are numpy arrays of equal size and D is a scalar
+#     get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
+#     deltaC = np.diff(c)
+#     deltaX = distance between macrophage and fibroblast
+#
+#   return -D * deltaC / deltaX
 
 def OR(reaction_list):
     tera = (-1)**(len(reaction_list)+1)
@@ -88,23 +73,28 @@ def OR(reaction_list):
     return tera
 
 def inte(state,t,reaction_dict):
+    # print(t)
     for i in range(len(node_ID)):
         globals()['{}'.format(node_ID[i])] = state[i]
     for i in range(len(node_ID)):
         if len(reaction_dict[node_ID[i]]) == 1:
             reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
             weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
-            TF = 1
-            for j in reactors:
-                TF *= Hill(j, n, EC50)
-            globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+            allKeys = list(reaction_dict[node_ID[i]].keys())
+            print(allKeys)
+            if any('===>' in s for s in allKeys):
+                TF *= Ficks(j, n, EC50)
+            else:
+                TF = 1
+                for j in reactors:
+                    TF *= Hill(j, n, EC50)
+                    globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         else:
             TF = OR(reaction_dict[node_ID[i]])
-            globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-        #print(str(i)+' finished')
-    return [globals()['{}'.format(k+ 'd')] for k in node_ID]
+        globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+    return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
-def hill_simulation( t, state0, reaction_dict):
+def hill_simulation(t, state0, reaction_dict):
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
     print('Hill Finished')
     return yHill_ss
@@ -165,10 +155,17 @@ state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
-t = np.arange(0.0, 120, 0.01)
+t = np.arange(0.0, 10, 0.01)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
 
-whatToDisplay = 3
+
+############################
+# SET THE EXCEL SHEET HERE #
+############################
+whatToDisplay = 4
+############################
+############################
+
 k = 12000
 plt.figure(figsize=(12,4))
 plt.subplot(121)
