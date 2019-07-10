@@ -68,35 +68,22 @@ for k in range(len(reactions)):
 
 species_dict = dict()
 for k in range(len(species)):
-    #lis = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
 
-y0_MA = []
-y30m_MA = []
-y30m_MA_trans = []
-y4h_MA = []
-y4h_MA_trans = []
-for i in range(len(node_ID)):
-    y0_MA.append(Yinit[i])
-    y30m_MA.append(Yinit[i])
-    y30m_MA_trans.append(Yinit[i])
-    y4h_MA.append(Yinit[i])
-    y4h_MA_trans.append(Yinit[i])
-
 geneinput = {i:0 for i in node_ID[98:]}
-
 for j in node_ID[98:]:
     for k in reaction_dict[j]:
         if '!' in k:
             geneinput[j] = 0.5
             break
 
+# read initial state
 state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
+# Set Time points here
 t = np.arange(0, 4, 1)
-print(t)
 
 ############################
 # SIMULATOR FUNCTIONS HERE #
