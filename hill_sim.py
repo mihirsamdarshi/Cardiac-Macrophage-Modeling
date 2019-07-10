@@ -36,18 +36,22 @@ from sklearn import datasets
 from sklearn.metrics import r2_score
 import csv
 
+# this function splits each reaction into it's individual reactos, and returns an array with each reaction's
+# reactors in an array (I believe)
+
 def get_reactors(reac):
     reac_split = reac.split(' ')
     reactors = []
     for k in reac_split:
-        if k != '&' and k!= '=>':
+        if k != '&' and k != '=>' and k != '===>':
             reactors.append(k)
     return reactors[:-1]
 
 def Hill(reactor, n, EC50):
+    print(reactor)
     B = (EC50**n-1)/(2*EC50**n-1)
     C = (B-1)**(1/n)
-
+    # if the first reactor has the prefix of ! then it is an inhibition reaction
     if reactor[0] == '!':
         return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
     else:
@@ -61,7 +65,7 @@ def Hill(reactor, n, EC50):
 #
 #   return -D * deltaC / deltaX
 
-def inte(reaction_list):
+def OR(reaction_list):
     tera = (-1)**(len(reaction_list)+1)
     for k in reaction_list:
         weight, n, EC50 = reaction_list[k]
@@ -72,7 +76,7 @@ def inte(reaction_list):
     tera +=1
     return tera
 
-def inte(state,t,reaction_dict):
+def inte(state, t, reaction_dict):
     # print(t)
     for i in range(len(node_ID)):
         globals()['{}'.format(node_ID[i])] = state[i]
@@ -80,23 +84,23 @@ def inte(state,t,reaction_dict):
         if len(reaction_dict[node_ID[i]]) == 1:
             reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
             weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
-            allKeys = list(reaction_dict[node_ID[i]].keys())
-            if any('===>' in string for string in allKeys):
-                TF = 1
-                TF *= Ficks(j, n, EC50)
-            else:
-                TF = 1
-                for j in reactors:
+            TF = 1
+            for j in reactors:
+                if any('===>' in string for string in reactors):
+                     print('true')
+                else:
                     TF *= Hill(j, n, EC50)
                     globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         else:
             TF = OR(reaction_dict[node_ID[i]])
         globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    print(list(k for k in node_ID))
-    print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
+    # print(list(k for k in node_ID))
+    # print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
+    #state0 gets passed into inte() as the value of each species
+    #odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
     print('Hill Finished')
     return yHill_ss
@@ -157,7 +161,7 @@ state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
-t = np.arange(0.0, 10, 0.01)
+t = np.arange(0, 2, 1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
 
 
