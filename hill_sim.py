@@ -61,7 +61,7 @@ def Hill(reactor, n, EC50):
 #
 #   return -D * deltaC / deltaX
 
-def OR(reaction_list):
+def inte(reaction_list):
     tera = (-1)**(len(reaction_list)+1)
     for k in reaction_list:
         weight, n, EC50 = reaction_list[k]
@@ -81,8 +81,8 @@ def inte(state,t,reaction_dict):
             reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
             weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
             allKeys = list(reaction_dict[node_ID[i]].keys())
-            print(allKeys)
-            if any('===>' in s for s in allKeys):
+            if any('===>' in string for string in allKeys):
+                TF = 1
                 TF *= Ficks(j, n, EC50)
             else:
                 TF = 1
@@ -92,6 +92,8 @@ def inte(state,t,reaction_dict):
         else:
             TF = OR(reaction_dict[node_ID[i]])
         globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+    print(list(k for k in node_ID))
+    print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
@@ -166,9 +168,9 @@ whatToDisplay = 4
 ############################
 ############################
 
-k = 12000
-plt.figure(figsize=(12,4))
-plt.subplot(121)
-plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-plt.legend(loc='best')
-plt.show()
+# k = 12000
+# plt.figure(figsize=(12,4))
+# plt.subplot(121)
+# plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+# plt.legend(loc='best')
+# plt.show()
