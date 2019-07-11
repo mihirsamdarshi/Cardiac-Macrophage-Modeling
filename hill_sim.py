@@ -152,6 +152,7 @@ def inte(state, t, reaction_dict):
                 rate = Ficks(reactors[0], reactors[2])
                 globals()['{}'.format(node_ID[i] + 'd')] = globals()['{}'.format(node_ID[i])]) - rate of change of each species
                 """
+                print('true')
             else:
                 # create a list of reactors from the reaction dictonary
                 reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
