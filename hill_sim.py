@@ -101,14 +101,13 @@ def get_reactors(reac):
 def Hill(reactor, n, EC50):
     B = (EC50**n-1)/(2*EC50**n-1)
     C = (B-1)**(1/n)
-
     # if the first reactor has the prefix of ! then it is an inhibition reaction
     if reactor[0] == '!':
         return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
     else:
         return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
 
-# def Ficks(reaction_duct[node_ID[i]]):
+# def Ficks(reaction_dict[node_ID[i]]):
 #     Assuming c and x are numpy arrays of equal size and D is a scalar
 #     get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
 #     deltaC = np.diff(c)
@@ -128,29 +127,35 @@ def OR(reaction_list):
     return tera
 
 def inte(state, t, reaction_dict):
+    # setter for the state of each node
     for i in range(len(node_ID)):
         globals()['{}'.format(node_ID[i])] = state[i]
+    # for every node in the reaction
     for i in range(len(node_ID)):
-        if len(reaction_dict[node_ID[i]]) == 1:
-            reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
-            weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
+        # create a list of reactions
+        allReactions = list(reaction_dict[node_ID[i]].keys())[0]
+        # if this is a Ficks diffusion reaction
+        if any('===>' in string for string in reactors):
+            print('true')
+        # else if there is only one possible reaction
+        elif len(reaction_dict[node_ID[i]]) == 1:
+            # create a list of reactors from the reaction dictonary
+            reactors = get_reactors(list(allReactions)
+            weight, n, EC50 = reaction_dict[node_ID[i]][allReactions]
             TF = 1
             for j in reactors:
-                if any('===>' in string for string in reactors):
-                     print('true')
-                else:
-                    TF *= Hill(j, n, EC50)
-                    globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+                TF *= Hill(j, n, EC50)
+            globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         else:
             TF = OR(reaction_dict[node_ID[i]])
-        globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+            globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
     # print(list(k for k in node_ID))
     # print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
-    #state0 gets passed into inte() as the value of each species
-    #odeint calls inte() for as many timepoints as t specifies
+    # state0 gets passed into inte() as the value of each species
+    # odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
     print('Hill Finished')
     return yHill_ss
