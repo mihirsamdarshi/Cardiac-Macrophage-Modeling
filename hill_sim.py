@@ -133,7 +133,7 @@ def inte(state, t, reaction_dict):
     # for every node in the reaction
     for i in range(len(node_ID)):
         # create a list of reactions
-        allReactions = list(reaction_dict[node_ID[i]].keys())[0]
+        allReactions = reaction_dict[node_ID[i]].keys()
         # if this is a Ficks diffusion reaction
         if any('===>' in string for string in allReactions):
             print('true')
