@@ -114,11 +114,13 @@ def Hill(reactor, n, EC50):
     else:
         return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
 
-# def Ficks(reaction_dict[node_ID[i]]):
-#     Assuming c and x are numpy arrays of equal size and D is a scalar
+# def Ficks(transIn, transOut):
 #     get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
-#     deltaC = np.diff(c)
+#     conc_one = globals()['{}'.format(transIn)])
+#     conc_two = globals()['{}'.format(transOut)])
+#     deltaC = conc_two - conc_one
 #     deltaX = distance between macrophage and fibroblast
+#     D = surface area of cell
 #
 #   return -D * deltaC / deltaX
 
@@ -150,7 +152,7 @@ def inte(state, t, reaction_dict):
                 """
                 reactors = get_reactors_for_ficks(string)
                 rate = Ficks(reactors[0], reactors[2])
-                globals()['{}'.format(node_ID[i] + 'd')] = globals()['{}'.format(node_ID[i])]) - rate of change of each species
+                globals()['{}'.format(node_ID[i] + 'd')] = rate of change of each species
                 """
                 print('true')
             else:
