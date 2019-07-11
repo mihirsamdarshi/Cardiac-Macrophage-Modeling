@@ -138,7 +138,7 @@ def inte(state, t, reaction_dict):
         if any('===>' in string for string in allReactions):
             print('true')
         # else if there is only one possible reaction
-        elif len(reaction_dict[node_ID[i]]) == 1:
+        if len(reaction_dict[node_ID[i]]) == 1:
             # create a list of reactors from the reaction dictonary
             reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
             weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
@@ -146,11 +146,10 @@ def inte(state, t, reaction_dict):
             for j in reactors:
                 TF *= Hill(j, n, EC50)
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+        # otherwise, there are two possible reactions
         else:
             TF = OR(reaction_dict[node_ID[i]])
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    # print(list(k for k in node_ID))
-    # print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
