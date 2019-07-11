@@ -85,7 +85,7 @@ t = np.arange(0.0, 10, 0.1)
 ############################
 # SIMULATOR FUNCTIONS HERE #
 ############################
-# this function splits each reaction into it's individual reactos, and returns an array with each reaction's
+# this function splits each reaction into it's individual reactors, and returns an array with each reaction's
 # reactors in an array (I believe)
 def get_reactors(reac):
     reac_split = reac.split(' ')
@@ -134,6 +134,14 @@ def inte(state, t, reaction_dict):
         # if this is a Ficks diffusion reaction
         TF = 1
         if any('===>' in string for string in allReactions):
+            """
+            TF = Ficks(string)
+            for j in reactors
+                get weight or whatever
+            globals()['{}'.format(node_ID[i] + 'd')] =
+            for Hill -> weight -> TF * initial amount -> Ymax[i] (minus)-
+            flux amount -> globals()['{}'.format(node_ID[i])]) / tau[i]
+            """
             print('true')
         # else if there is only one possible reaction
         if len(reaction_dict[node_ID[i]]) == 1:
@@ -145,6 +153,7 @@ def inte(state, t, reaction_dict):
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         # otherwise, there are two possible reactions
         else:
+            print('true')
             TF = OR(reaction_dict[node_ID[i]])
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
@@ -161,9 +170,10 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 3
+whatToDisplay = 4
 ############################
 ############################
+
 
 k = 12000
 plt.figure(figsize=(12,4))
