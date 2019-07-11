@@ -135,13 +135,13 @@ def inte(state, t, reaction_dict):
         # create a list of reactions
         allReactions = list(reaction_dict[node_ID[i]].keys())[0]
         # if this is a Ficks diffusion reaction
-        if any('===>' in string for string in reactors):
+        if any('===>' in string for string in allReactions):
             print('true')
         # else if there is only one possible reaction
         elif len(reaction_dict[node_ID[i]]) == 1:
             # create a list of reactors from the reaction dictonary
-            reactors = get_reactors(list(allReactions)
-            weight, n, EC50 = reaction_dict[node_ID[i]][allReactions]
+            reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
+            weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
             TF = 1
             for j in reactors:
                 TF *= Hill(j, n, EC50)
