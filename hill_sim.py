@@ -114,15 +114,15 @@ def Hill(reactor, n, EC50):
     else:
         return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
 
-# def Ficks(transIn, transOut):
-#     get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
-#     conc_one = globals()['{}'.format(transIn)])
-#     conc_two = globals()['{}'.format(transOut)])
-#     deltaC = conc_two - conc_one
-#     deltaX = distance between macrophage and fibroblast
-#     D = surface area of cell
-#
-#   return -D * deltaC / deltaX
+def Ficks(transIn, transOut):
+    # get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
+    conc_one = globals()['{}'.format(transIn)]
+    conc_two = globals()['{}'.format(transOut)]
+    deltaC = conc_two - conc_one
+    deltaX = 1
+    D = 1
+
+    return -D * deltaC / deltaX
 
 def OR(reaction_list):
     tera = (-1)**(len(reaction_list)+1)
@@ -141,19 +141,17 @@ def inte(state, t, reaction_dict):
         globals()['{}'.format(node_ID[i])] = state[i]
     # for every node in the reaction
     for i in range(len(node_ID)):
-        # create a list of reactions
-        allReactions = reaction_dict[node_ID[i]].keys()
         # TF represents a base reaction rate (I believe)
         TF = 1
-        # if this is a Ficks diffusion reaction
+        # if there is only one possible reaction
         if len(reaction_dict[node_ID[i]]) == 1:
-            # else if there is only one possible reaction
-            if any('===>' in string for string in allReactions):
-                """
-                reactors = get_reactors_for_ficks(string)
-                rate = Ficks(reactors[0], reactors[2])
-                globals()['{}'.format(node_ID[i] + 'd')] = rate of change of each species
-                """
+            # get reaction string
+            single_reaction = list(reaction_dict[node_ID[i]].keys())[0]
+            # check reaction string and run if it is a Ficks diffusion reaction
+            if any('===>' in string for string in single_reaction):
+                reactors = get_reactors_for_ficks(single_reaction)
+                rate = Ficks(reactors[0], reactors[1])
+                globals()['{}'.format(node_ID[i] + 'd')] = rate
                 print('true')
             else:
                 # create a list of reactors from the reaction dictonary
@@ -183,11 +181,11 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 4
+whatToDisplay = 3
 ############################
 ############################
 
-
+# Code to display graph
 k = 12000
 plt.figure(figsize=(12,4))
 plt.subplot(121)
