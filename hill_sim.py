@@ -39,11 +39,13 @@ import csv
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-regular = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
+macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
-stepbystep = '/Users/mihir/Documents/Summer/Models/stepbystep.xlsx'
+step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
+og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
+og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xls'
 
-active = stepbystep
+active = step_by_step
 ############################
 ############################
 
@@ -61,21 +63,16 @@ Ymax = species['Ymax'].tolist()
 Ymax2 = species['Ymax'].tolist()
 tau = species['tau'].tolist()
 
+# create a dictionary of all the reactions
 reaction_dict = collections.defaultdict(dict)
 for k in range(len(reactions)):
     node = reactions.loc[k, 'Rule'].split(' ')
     reaction_dict[node[-1]][reactions.loc[k, 'Rule']] = reactions.loc[k, ['Weight', 'n', 'EC50']].tolist()
 
+# create a dictionary of all the species
 species_dict = dict()
 for k in range(len(species)):
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
-
-geneinput = {i:0 for i in node_ID[98:]}
-for j in node_ID[98:]:
-    for k in reaction_dict[j]:
-        if '!' in k:
-            geneinput[j] = 0.5
-            break
 
 # read initial state
 state0 = []
@@ -135,6 +132,7 @@ def inte(state, t, reaction_dict):
         # create a list of reactions
         allReactions = reaction_dict[node_ID[i]].keys()
         # if this is a Ficks diffusion reaction
+        TF = 1
         if any('===>' in string for string in allReactions):
             print('true')
         # else if there is only one possible reaction
@@ -142,7 +140,6 @@ def inte(state, t, reaction_dict):
             # create a list of reactors from the reaction dictonary
             reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
             weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
-            TF = 1
             for j in reactors:
                 TF *= Hill(j, n, EC50)
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
@@ -164,13 +161,13 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 4
+whatToDisplay = 0
 ############################
 ############################
 
-# k = 12000
-# plt.figure(figsize=(12,4))
-# plt.subplot(121)
-# plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-# plt.legend(loc='best')
-# plt.show()
+k = 12000
+plt.figure(figsize=(12,4))
+plt.subplot(121)
+plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+plt.legend(loc='best')
+plt.show()
