@@ -80,7 +80,7 @@ for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
 # Set Time points here
-t = np.arange(0, 4, 1)
+t = np.arange(0.0, 10, 0.1)
 
 ############################
 # SIMULATOR FUNCTIONS HERE #
@@ -161,7 +161,7 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 0
+whatToDisplay = 3
 ############################
 ############################
 
