@@ -14,26 +14,11 @@
 ###import packages###
 import pandas as pd
 import collections
-import timeit
 from scipy.integrate import solve_ivp
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
-import networkx as nx
-import matplotlib.mlab as mlab
-import statistics
-import random
-import numpy.linalg
 import numpy as np
-import sys
 from scipy.optimize import minimize
-elapsed_time = timeit.default_timer()
-from sklearn.linear_model import LinearRegression
-from sklearn import cluster
-import seaborn as sns
-sns.set()
-from sklearn import datasets
-from sklearn.metrics import r2_score
-import csv
 
 ############################
 # SET THE EXCEL SHEET HERE #
