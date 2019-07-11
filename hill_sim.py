@@ -2,15 +2,14 @@
 # coding: utf-8
 
 # ## Cardiac Regulatory Network for CMRG
-# ### CRNC developed by Shulin Cao
+# ### Originally developed by Shulin Cao
+# ### Modified/annotated by Mihir Samdarshi
 # ### Only for use in CMRG
 
-# In[26]:
-
-
 ###------Network Simulator------###
-###------Shulin Cao------###
-###------CMRG, UC San Diego------###
+###---------Shulin Cao----------###
+###-------Mihir Samdarshi-------###
+###------CMRG, UC San Diego-----###
 
 ###import packages###
 import pandas as pd
@@ -39,11 +38,13 @@ import csv
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-regular = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
+macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
-stepbystep = '/Users/mihir/Documents/Summer/Models/stepbystep.xlsx'
+step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
+og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
+og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xls'
 
-active = stepbystep
+active = step_by_step
 ############################
 ############################
 
@@ -61,21 +62,16 @@ Ymax = species['Ymax'].tolist()
 Ymax2 = species['Ymax'].tolist()
 tau = species['tau'].tolist()
 
+# create a dictionary of all the reactions
 reaction_dict = collections.defaultdict(dict)
 for k in range(len(reactions)):
     node = reactions.loc[k, 'Rule'].split(' ')
     reaction_dict[node[-1]][reactions.loc[k, 'Rule']] = reactions.loc[k, ['Weight', 'n', 'EC50']].tolist()
 
+# create a dictionary of all the species
 species_dict = dict()
 for k in range(len(species)):
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
-
-geneinput = {i:0 for i in node_ID[98:]}
-for j in node_ID[98:]:
-    for k in reaction_dict[j]:
-        if '!' in k:
-            geneinput[j] = 0.5
-            break
 
 # read initial state
 state0 = []
@@ -83,29 +79,40 @@ for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
 # Set Time points here
-t = np.arange(0, 4, 1)
+t = np.arange(0.0, 10, 0.1)
 
 ############################
 # SIMULATOR FUNCTIONS HERE #
 ############################
-# this function splits each reaction into it's individual reactos, and returns an array with each reaction's
+# this function splits each reaction into it's individual reactors, and returns an array with each reaction's
 # reactors in an array (I believe)
-def get_reactors(reac):
-    reac_split = reac.split(' ')
+def get_reactors(reaction):
+    reac_split = reaction.split(' ')
     reactors = []
     for k in reac_split:
         if k != '&' and k != '=>' and k != '===>':
             reactors.append(k)
     return reactors[:-1]
 
+def get_reactors_for_ficks(reaction):
+    reac_split = reaction.split(' ')
+    reactors = []
+    for k in reac_split:
+        if k != '&' and k != '=>' and k != '===>':
+            reactors.append(k)
+    return reactors
+
+# activation function as defined by equations in PMID: 21087478
 def Hill(reactor, n, EC50):
+    # equation 1.3
     B = (EC50**n-1)/(2*EC50**n-1)
-    C = (B-1)**(1/n)
+    K = (B-1)**(1/n)
     # if the first reactor has the prefix of ! then it is an inhibition reaction
+    # equation 1.2
     if reactor[0] == '!':
-        return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
+        return (1-B*globals()['{}'.format(reactor[1:])]**n/(K**n + globals()['{}'.format(reactor[1:])]**n))
     else:
-        return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
+        return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
 
 # def Ficks(reaction_dict[node_ID[i]]):
 #     Assuming c and x are numpy arrays of equal size and D is a scalar
@@ -133,24 +140,32 @@ def inte(state, t, reaction_dict):
     # for every node in the reaction
     for i in range(len(node_ID)):
         # create a list of reactions
-        allReactions = list(reaction_dict[node_ID[i]].keys())[0]
+        allReactions = reaction_dict[node_ID[i]].keys()
+        # TF represents a base reaction rate (I believe)
+        TF = 1
         # if this is a Ficks diffusion reaction
-        if any('===>' in string for string in allReactions):
-            print('true')
-        # else if there is only one possible reaction
-        elif len(reaction_dict[node_ID[i]]) == 1:
-            # create a list of reactors from the reaction dictonary
-            reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
-            weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
-            TF = 1
-            for j in reactors:
-                TF *= Hill(j, n, EC50)
-            globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+        if len(reaction_dict[node_ID[i]]) == 1:
+            # else if there is only one possible reaction
+            if any('===>' in string for string in allReactions):
+                """
+                reactors = get_reactors_for_ficks(string)
+                rate = Ficks(reactors[0], reactors[2])
+                globals()['{}'.format(node_ID[i] + 'd')] = globals()['{}'.format(node_ID[i])]) - rate of change of each species
+                """
+            else:
+                # create a list of reactors from the reaction dictonary
+                reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
+                weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
+                # for each inital reactor, get activation function from Hill
+                for j in reactors:
+                    TF *= Hill(j, n, EC50)
+                # assignment to derivative of rate of change of node_ID[i]
+                # equation derived from 1.1 from PMID: 21087478
+                globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+        # otherwise, there are two possible reactions
         else:
             TF = OR(reaction_dict[node_ID[i]])
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    # print(list(k for k in node_ID))
-    # print(list([globals()['{}'.format(k + 'd')] for k in node_ID]))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
@@ -169,9 +184,10 @@ whatToDisplay = 4
 ############################
 ############################
 
-# k = 12000
-# plt.figure(figsize=(12,4))
-# plt.subplot(121)
-# plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-# plt.legend(loc='best')
-# plt.show()
+
+k = 12000
+plt.figure(figsize=(12,4))
+plt.subplot(121)
+plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+plt.legend(loc='best')
+plt.show()
