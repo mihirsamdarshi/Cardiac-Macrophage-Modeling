@@ -58,8 +58,10 @@ for k in range(len(reactions)):
 species_dict = dict()
 for k in range(len(species)):
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
+############################
+############################
 
-# read initial state
+# read and set the initial state based on Yinit from Excel sheet
 state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
