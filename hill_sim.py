@@ -80,6 +80,7 @@ def get_reactors(reaction):
             reactors.append(k)
     return reactors[:-1]
 
+# returns both reactors, unlike above function because Ficks requires the concentration of both species
 def get_reactors_for_ficks(reaction):
     reac_split = reaction.split(' ')
     reactors = []
@@ -100,6 +101,7 @@ def Hill(reactor, n, EC50):
     else:
         return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
 
+# returns the rate of change utilizing Ficks Second Law equation
 def Ficks(transIn, transOut):
     # get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
     conc_one = globals()['{}'.format(transIn)]
@@ -110,6 +112,7 @@ def Ficks(transIn, transOut):
 
     return -D * deltaC / deltaX
 
+# if there are multiple possibilities for activation, this function is used
 def OR(reaction_list):
     tera = (-1)**(len(reaction_list)+1)
     for k in reaction_list:
@@ -121,6 +124,7 @@ def OR(reaction_list):
     tera +=1
     return tera
 
+# returns derivate (rate of change) for each species at each time point
 def inte(state, t, reaction_dict):
     # setter for the state of each node
     for i in range(len(node_ID)):
