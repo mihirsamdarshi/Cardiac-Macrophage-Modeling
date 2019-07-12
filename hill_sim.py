@@ -18,7 +18,8 @@ from scipy.integrate import solve_ivp
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize
+import seaborn as sns
+sns.set()
 
 ############################
 # SET THE EXCEL SHEET HERE #
