@@ -28,10 +28,9 @@ macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
-og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xlsx'
-fickstest = '/Users/mihir/Documents/Summer/Models/fickstest.xlsx'
+og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xls'
 
-active = macrophage
+active = no_inhibition
 ############################
 ############################
 
@@ -79,7 +78,7 @@ def get_reactors(reaction):
     reac_split = reaction.split(' ')
     reactors = []
     for k in reac_split:
-        if k != '&' and k != '=>':
+        if k != '&' and k != '=>' and k != '===>':
             reactors.append(k)
     return reactors[:-1]
 
@@ -96,14 +95,13 @@ def get_reactors_for_ficks(reaction):
 def Hill(reactor, n, EC50):
     # equation 1.3
     B = (EC50**n-1)/(2*EC50**n-1)
-    C = (B-1)**(1/n)
-        # if the first reactor has the prefix of ! then it is an inhibition reaction
-        # equation 1.2
+    K = (B-1)**(1/n)
+    # if the first reactor has the prefix of ! then it is an inhibition reaction
+    # equation 1.2
     if reactor[0] == '!':
-        return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
+        return (1-B*globals()['{}'.format(reactor[1:])]**n/(K**n + globals()['{}'.format(reactor[1:])]**n))
     else:
-        return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
-
+        return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
 
 # returns the rate of change utilizing Ficks Second Law equation
 def Ficks(transIn, transOut):
@@ -112,11 +110,9 @@ def Ficks(transIn, transOut):
     conc_two = globals()['{}'.format(transOut)]
     deltaC = conc_two - conc_one
     deltaX = 1
-    area = 1
-    dCoef = 0.5
-    rate = dCoef * -area * deltaC / deltaX
-    globals()['{}'.format(transIn)] = globals()['{}'.format(transIn)] - rate
-    return rate
+    D = 1
+
+    return -D * deltaC / deltaX
 
 # if there are multiple possibilities for activation, this function is used
 def OR(reaction_list):
@@ -144,10 +140,11 @@ def inte(state, t, reaction_dict):
             # get reaction string
             single_reaction = list(reaction_dict[node_ID[i]].keys())[0]
             # check reaction string and run if it is a Ficks diffusion reaction
-            if '===>' in single_reaction:
+            if any('===>' in string for string in single_reaction):
                 reactors = get_reactors_for_ficks(single_reaction)
                 rate = Ficks(reactors[0], reactors[1])
                 globals()['{}'.format(node_ID[i] + 'd')] = rate
+                print('true')
             else:
                 # create a list of reactors from the reaction dictonary
                 reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
@@ -176,14 +173,14 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 27
+whatToDisplay = 23
 ############################
 ############################
 
 k = 12000
 
 # Code to export data to CSV
-np.savetxt(("Data/"+node_ID[whatToDisplay]+ "_inhibited.csv"), np.transpose([t[:k], yHill_ss[:k,whatToDisplay]]), delimiter=",", header=('time,' + node_ID[whatToDisplay]))
+np.savetxt(("Data/"+node_ID[whatToDisplay]+ "_uninhibited.csv"), np.transpose([t[:k], yHill_ss[:k,whatToDisplay]]), delimiter=",", header=('time,' + node_ID[whatToDisplay]))
 
 # Code to display graph
 # plt.figure(figsize=(12,4))
