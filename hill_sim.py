@@ -67,7 +67,7 @@ for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
 # Set Time points here
-t = np.arange(0.0, 10, 1)
+t = np.arange(0.0, 100, 1)
 
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
@@ -156,7 +156,6 @@ def inte(state, t, reaction_dict):
                     TF *= Hill(j, n, EC50)
                 # assignment to derivative of rate of change of node_ID[i]
                 # equation derived from 1.1 from PMID: 21087478
-                # print(node_ID[i] + " Ymax :" + str(Ymax[i]))
                 globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         # otherwise, there are two possible reactions
         else:
@@ -168,7 +167,7 @@ def hill_simulation(t, state0, reaction_dict):
     # state0 gets passed into inte() as the value of each species
     # odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
-    print('Hill Finished \n')
+    print('Hill Finished\n')
     return yHill_ss
 
 yHill_ss = hill_simulation(t, state0, reaction_dict)
@@ -176,7 +175,7 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ######################################
 # SET DISPLAY/EXPORT PARAMETERS HERE #
 ######################################
-whatToDisplay = 0
+whatToDisplay = 1
 whatToExport = 0
 exportDataLocation = "data/allData.csv"
 knockdownPercentage = 0.5
@@ -186,22 +185,22 @@ knockdownPercentage = 0.5
 k = 6000
 
 # Code to display graph
-def printGraph(whatToDisplay):
+def printGraph(whatToDisplay, simData):
     plt.figure(figsize=(12,4))
     plt.subplot(121)
-    plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+    plt.plot(t[:k], simData[:k,whatToDisplay], label = node_ID[whatToDisplay])
     plt.legend(loc='best')
     plt.show()
 
 # Code to export a single species as a CSV
-def exportSingleSpecies(whatToExport):
+def exportSingleSpecies(whatToExport, simData):
     csvTitle = ("Data/"+ node_ID[whatToExport] + "_inhibited.csv")
     headerTitle = ('time,' + node_ID[whatToExport])
-    dataToPrint = np.transpose([t[:k], yHill_ss[:k,whatToExport]])
+    dataToPrint = np.transpose([t[:k], simData[:k,whatToExport]])
     np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
 
 # Code to export all data to a CSV
-def exportAllData(exportLocation):
+def exportAllData(exportLocation, simData):
     csv = open(exportLocation, "w")
     columnTitleRow = "time, "
     for species in node_ID:
@@ -211,7 +210,7 @@ def exportAllData(exportLocation):
     for timepoint in t.astype(str):
         csv.write(timepoint + ',')
         for species in range(len(node_ID)):
-            csv.write(yHill_ss[timepoint_num,species].astype(str) + ",")
+            csv.write(simData[timepoint_num,species].astype(str) + ",")
         timepoint_num += 1
         csv.write('\n')
 
@@ -219,19 +218,20 @@ def exportAllData(exportLocation):
 def runAutoSensitivity(knockdownPercentage):
     for species in range(len(node_ID)):
         originalYMax = Ymax[species]
+        newYmax = originalYMax * knockdownPercentage
         Ymax[species] = originalYMax * knockdownPercentage
         print("Species: " + node_ID[species] + ", Ymax:" + str(originalYMax) + ", knockdown Ymax:" + str(Ymax[species]))
-        hill_simulation(t, state0, reaction_dict)
+        kdData = hill_simulation(t, state0, reaction_dict)
         saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
-        # exportAllData(saLocation)
+        exportAllData(saLocation, kdData)
         Ymax[species] = originalYMax
 
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
 runAutoSensitivity(knockdownPercentage)
-# exportSingleSpecies(whatToExport)
-# exportAllData(exportDataLocation)
+# exportSingleSpecies(whatToExport, yHill_ss)
+exportAllData(exportDataLocation, yHill_ss)
 # printGraph(whatToDisplay)
 ######################################
 ######################################
