@@ -21,22 +21,23 @@ import numpy as np
 import seaborn as sns
 sns.set()
 
-############################
+######################################
 # SET THE EXCEL SHEET HERE #
-############################
+######################################
 macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
-og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xls'
+og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xlsx'
+fickstest = '/Users/mihir/Documents/Summer/Models/fickstest.xlsx'
 
-active = no_inhibition
-############################
-############################
+active = macrophage
+######################################
+######################################
 
-############################
+######################################
 # EXCEL SHEET PARSED HERE  #
-############################
+######################################
 reactions = pd.read_excel(active, sheet_name = 1, skiprows = 1, header = 0)
 species = pd.read_excel(active, sheet_name = 0, skiprows = 1, header = 0)
 pmid = reactions['PMID'].tolist()
@@ -45,7 +46,6 @@ species = species[['ID', 'Yinit', 'Ymax', 'tau']]
 node_ID = species['ID'].tolist()
 Yinit = species['Yinit'].tolist()
 Ymax = species['Ymax'].tolist()
-Ymax2 = species['Ymax'].tolist()
 tau = species['tau'].tolist()
 
 # create a dictionary of all the reactions
@@ -58,27 +58,24 @@ for k in range(len(reactions)):
 species_dict = dict()
 for k in range(len(species)):
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
-############################
-############################
 
 # read and set the initial state based on Yinit from Excel sheet
 state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
-
-# Set Time points here
-t = np.arange(0.0, 60, 0.1)
-
 ############################
-# SIMULATOR FUNCTIONS HERE #
 ############################
+
+######################################
+###### SIMULATOR FUNCTIONS HERE ######
+######################################
 # this function splits each reaction into it's individual reactors, and returns an array with each reaction's
 # reactors in an array (I believe)
 def get_reactors(reaction):
     reac_split = reaction.split(' ')
     reactors = []
     for k in reac_split:
-        if k != '&' and k != '=>' and k != '===>':
+        if k != '&' and k != '=>':
             reactors.append(k)
     return reactors[:-1]
 
@@ -95,13 +92,14 @@ def get_reactors_for_ficks(reaction):
 def Hill(reactor, n, EC50):
     # equation 1.3
     B = (EC50**n-1)/(2*EC50**n-1)
-    K = (B-1)**(1/n)
-    # if the first reactor has the prefix of ! then it is an inhibition reaction
-    # equation 1.2
+    C = (B-1)**(1/n)
+        # if the first reactor has the prefix of ! then it is an inhibition reaction
+        # equation 1.2
     if reactor[0] == '!':
-        return (1-B*globals()['{}'.format(reactor[1:])]**n/(K**n + globals()['{}'.format(reactor[1:])]**n))
+        return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
     else:
-        return B*globals()['{}'.format(reactor)]**n/(K**n + globals()['{}'.format(reactor)]**n)
+        return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
+
 
 # returns the rate of change utilizing Ficks Second Law equation
 def Ficks(transIn, transOut):
@@ -110,9 +108,11 @@ def Ficks(transIn, transOut):
     conc_two = globals()['{}'.format(transOut)]
     deltaC = conc_two - conc_one
     deltaX = 1
-    D = 1
-
-    return -D * deltaC / deltaX
+    area = 1
+    dCoef = 0.5
+    rate = dCoef * -area * deltaC / deltaX
+    globals()['{}'.format(transIn)] = globals()['{}'.format(transIn)] - rate
+    return rate
 
 # if there are multiple possibilities for activation, this function is used
 def OR(reaction_list):
@@ -140,11 +140,10 @@ def inte(state, t, reaction_dict):
             # get reaction string
             single_reaction = list(reaction_dict[node_ID[i]].keys())[0]
             # check reaction string and run if it is a Ficks diffusion reaction
-            if any('===>' in string for string in single_reaction):
+            if '===>' in single_reaction:
                 reactors = get_reactors_for_ficks(single_reaction)
                 rate = Ficks(reactors[0], reactors[1])
                 globals()['{}'.format(node_ID[i] + 'd')] = rate
-                print('true')
             else:
                 # create a list of reactors from the reaction dictonary
                 reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
@@ -165,26 +164,71 @@ def hill_simulation(t, state0, reaction_dict):
     # state0 gets passed into inte() as the value of each species
     # odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
-    print('Hill Finished')
+    print('Hill Finished\n')
     return yHill_ss
 
+######################################
+# SET DISPLAY/EXPORT PARAMETERS HERE #
+######################################
+t = np.arange(0.0, 60, 0.1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
+whatToDisplay = 1
+whatToExport = 0
+exportDataLocation = "data/allData_unuinhibited.csv"
+knockdownPercentage = 0.5
+######################################
 
-############################
-# SET THE EXCEL SHEET HERE #
-############################
-whatToDisplay = 23
-############################
-############################
-
-k = 12000
-
-# Code to export data to CSV
-np.savetxt(("Data/"+node_ID[whatToDisplay]+ "_uninhibited.csv"), np.transpose([t[:k], yHill_ss[:k,whatToDisplay]]), delimiter=",", header=('time,' + node_ID[whatToDisplay]))
+# number of timepoints to display
+k = 6000
 
 # Code to display graph
-# plt.figure(figsize=(12,4))
-# plt.subplot(121)
-# plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-# plt.legend(loc='best')
-# plt.show()
+def printGraph(whatToDisplay, simData):
+    plt.figure(figsize=(12,4))
+    plt.subplot(121)
+    plt.plot(t[:k], simData[:k,whatToDisplay], label = node_ID[whatToDisplay])
+    plt.legend(loc='best')
+    plt.show()
+
+# Code to export a single species as a CSV
+def exportSingleSpecies(whatToExport, simData):
+    csvTitle = ("Data/"+ node_ID[whatToExport] + "_uninhibited.csv")
+    headerTitle = ('time,' + node_ID[whatToExport])
+    dataToPrint = np.transpose([t[:k], simData[:k,whatToExport]])
+    np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
+
+# Code to export all data to a CSV
+def exportAllData(exportLocation, simData):
+    csv = open(exportLocation, "w")
+    columnTitleRow = "time, "
+    for species in node_ID:
+        columnTitleRow += species + ","
+    csv.write(columnTitleRow + '\n')
+    timepoint_num = 0
+    for timepoint in t.astype(str):
+        csv.write(timepoint + ',')
+        for species in range(len(node_ID)):
+            csv.write(simData[timepoint_num,species].astype(str) + ",")
+        timepoint_num += 1
+        csv.write('\n')
+
+# Code that runs hill simulations with each Ymax knocked down to user-specified parameter
+def runAutoSensitivity(knockdownPercentage):
+    for species in range(len(node_ID)):
+        originalYMax = Ymax[species]
+        newYmax = originalYMax * knockdownPercentage
+        Ymax[species] = originalYMax * knockdownPercentage
+        print("Species: " + node_ID[species] + ", Ymax:" + str(originalYMax) + ", knockdown Ymax:" + str(Ymax[species]))
+        kdData = hill_simulation(t, state0, reaction_dict)
+        saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
+        exportAllData(saLocation, kdData)
+        Ymax[species] = originalYMax
+
+######################################
+## DISPLAY/EXPORT FUNCS CALLED HERE ##
+######################################
+# runAutoSensitivity(knockdownPercentage)
+# exportSingleSpecies(whatToExport, yHill_ss)
+exportAllData(exportDataLocation, yHill_ss)
+# printGraph(whatToDisplay)
+######################################
+######################################

@@ -226,7 +226,7 @@ def runAutoSensitivity(knockdownPercentage):
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-runAutoSensitivity(knockdownPercentage)
+# runAutoSensitivity(knockdownPercentage)
 # exportSingleSpecies(whatToExport, yHill_ss)
 exportAllData(exportDataLocation, yHill_ss)
 # printGraph(whatToDisplay)
