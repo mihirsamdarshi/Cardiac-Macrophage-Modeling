@@ -58,16 +58,13 @@ for k in range(len(reactions)):
 species_dict = dict()
 for k in range(len(species)):
     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
-############################
-############################
 
 # read and set the initial state based on Yinit from Excel sheet
 state0 = []
 for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
-
-# Set Time points here
-t = np.arange(0.0, 100, 1)
+############################
+############################
 
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
@@ -170,11 +167,11 @@ def hill_simulation(t, state0, reaction_dict):
     print('Hill Finished\n')
     return yHill_ss
 
-yHill_ss = hill_simulation(t, state0, reaction_dict)
-
 ######################################
 # SET DISPLAY/EXPORT PARAMETERS HERE #
 ######################################
+t = np.arange(0.0, 60, 0.1)
+yHill_ss = hill_simulation(t, state0, reaction_dict)
 whatToDisplay = 1
 whatToExport = 0
 exportDataLocation = "data/allData.csv"
