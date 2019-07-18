@@ -176,18 +176,37 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ############################
 # SET THE EXCEL SHEET HERE #
 ############################
-whatToDisplay = 27
-############################
+whatToDisplay = 0
 ############################
 
-k = 12000
+# number of timepoints to display
+k = 6000
 
-# Code to export data to CSV
+# Code to export all data to CSV
+exportData = "Data/allData.csv"
+
+def exportAllData(exportLocation):
+    csv = open(exportData, "w")
+    columnTitleRow = "time, "
+    for species in node_ID:
+        columnTitleRow += species + ","
+    csv.write(columnTitleRow + '\n')
+    timepoint_num = 0
+    for timepoint in t.astype(str):
+        csv.write(timepoint + ',')
+        for species in range(len(node_ID)):
+            csv.write(yHill_ss[timepoint_num,species].astype(str) + ",")
+        timepoint_num += 1
+        csv.write('\n')
+
+exportAllData(exportData)
+
+# Code to export single species to CSV
 np.savetxt(("Data/"+node_ID[whatToDisplay]+ "_inhibited.csv"), np.transpose([t[:k], yHill_ss[:k,whatToDisplay]]), delimiter=",", header=('time,' + node_ID[whatToDisplay]))
 
 # Code to display graph
-# plt.figure(figsize=(12,4))
-# plt.subplot(121)
-# plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-# plt.legend(loc='best')
-# plt.show()
+plt.figure(figsize=(12,4))
+plt.subplot(121)
+plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+plt.legend(loc='best')
+plt.show()
