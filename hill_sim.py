@@ -46,7 +46,6 @@ species = species[['ID', 'Yinit', 'Ymax', 'tau']]
 node_ID = species['ID'].tolist()
 Yinit = species['Yinit'].tolist()
 Ymax = species['Ymax'].tolist()
-Ymax2 = species['Ymax'].tolist()
 tau = species['tau'].tolist()
 
 # create a dictionary of all the reactions
@@ -68,7 +67,7 @@ for k in range(len(node_ID)):
     state0.append(Yinit[k])  #solve_ivp
 
 # Set Time points here
-t = np.arange(0.0, 60, 0.1)
+t = np.arange(0.0, 10, 1)
 
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
@@ -157,6 +156,7 @@ def inte(state, t, reaction_dict):
                     TF *= Hill(j, n, EC50)
                 # assignment to derivative of rate of change of node_ID[i]
                 # equation derived from 1.1 from PMID: 21087478
+                # print(node_ID[i] + " Ymax :" + str(Ymax[i]))
                 globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
         # otherwise, there are two possible reactions
         else:
@@ -168,7 +168,7 @@ def hill_simulation(t, state0, reaction_dict):
     # state0 gets passed into inte() as the value of each species
     # odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
-    print('Hill Finished')
+    print('Hill Finished \n')
     return yHill_ss
 
 yHill_ss = hill_simulation(t, state0, reaction_dict)
@@ -178,7 +178,8 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 ######################################
 whatToDisplay = 0
 whatToExport = 0
-exportDataLocation = "Data/allData.csv"
+exportDataLocation = "data/allData.csv"
+knockdownPercentage = 0.5
 ######################################
 
 # number of timepoints to display
@@ -199,9 +200,9 @@ def exportSingleSpecies(whatToExport):
     dataToPrint = np.transpose([t[:k], yHill_ss[:k,whatToExport]])
     np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
 
-# Code to export allData to a CSV
+# Code to export all data to a CSV
 def exportAllData(exportLocation):
-    csv = open(exportData, "w")
+    csv = open(exportLocation, "w")
     columnTitleRow = "time, "
     for species in node_ID:
         columnTitleRow += species + ","
@@ -215,15 +216,22 @@ def exportAllData(exportLocation):
         csv.write('\n')
 
 # Code that runs hill simulations with each Ymax knocked down to user-specified parameter
-def runAutoSensitivity(percentage):
-    for species in node_ID:
-        print(Ymax[species])
+def runAutoSensitivity(knockdownPercentage):
+    for species in range(len(node_ID)):
+        originalYMax = Ymax[species]
+        Ymax[species] = originalYMax * knockdownPercentage
+        print("Species: " + node_ID[species] + ", Ymax:" + str(originalYMax) + ", knockdown Ymax:" + str(Ymax[species]))
+        hill_simulation(t, state0, reaction_dict)
+        saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
+        # exportAllData(saLocation)
+        Ymax[species] = originalYMax
 
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-exportSingleSpecies(whatToExport)
-exportAllData(exportDataLocation)
-printGraph(whatToDisplay)
+runAutoSensitivity(knockdownPercentage)
+# exportSingleSpecies(whatToExport)
+# exportAllData(exportDataLocation)
+# printGraph(whatToDisplay)
 ######################################
 ######################################
