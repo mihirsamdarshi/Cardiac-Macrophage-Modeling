@@ -21,9 +21,9 @@ import numpy as np
 import seaborn as sns
 sns.set()
 
-############################
+######################################
 # SET THE EXCEL SHEET HERE #
-############################
+######################################
 macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
@@ -32,12 +32,12 @@ og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_
 fickstest = '/Users/mihir/Documents/Summer/Models/fickstest.xlsx'
 
 active = macrophage
-############################
-############################
+######################################
+######################################
 
-############################
+######################################
 # EXCEL SHEET PARSED HERE  #
-############################
+######################################
 reactions = pd.read_excel(active, sheet_name = 1, skiprows = 1, header = 0)
 species = pd.read_excel(active, sheet_name = 0, skiprows = 1, header = 0)
 pmid = reactions['PMID'].tolist()
@@ -70,9 +70,9 @@ for k in range(len(node_ID)):
 # Set Time points here
 t = np.arange(0.0, 60, 0.1)
 
-############################
-# SIMULATOR FUNCTIONS HERE #
-############################
+######################################
+###### SIMULATOR FUNCTIONS HERE ######
+######################################
 # this function splits each reaction into it's individual reactors, and returns an array with each reaction's
 # reactors in an array (I believe)
 def get_reactors(reaction):
@@ -173,18 +173,33 @@ def hill_simulation(t, state0, reaction_dict):
 
 yHill_ss = hill_simulation(t, state0, reaction_dict)
 
-############################
-# SET THE EXCEL SHEET HERE #
-############################
+######################################
+# SET DISPLAY/EXPORT PARAMETERS HERE #
+######################################
 whatToDisplay = 0
-############################
+whatToExport = 0
+exportDataLocation = "Data/allData.csv"
+######################################
 
 # number of timepoints to display
 k = 6000
 
-# Code to export all data to CSV
-exportData = "Data/allData.csv"
+# Code to display graph
+def printGraph(whatToDisplay):
+    plt.figure(figsize=(12,4))
+    plt.subplot(121)
+    plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
+    plt.legend(loc='best')
+    plt.show()
 
+# Code to export a single species as a CSV
+def exportSingleSpecies(whatToExport):
+    csvTitle = ("Data/"+ node_ID[whatToExport] + "_inhibited.csv")
+    headerTitle = ('time,' + node_ID[whatToExport])
+    dataToPrint = np.transpose([t[:k], yHill_ss[:k,whatToExport]])
+    np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
+
+# Code to export allData to a CSV
 def exportAllData(exportLocation):
     csv = open(exportData, "w")
     columnTitleRow = "time, "
@@ -199,14 +214,16 @@ def exportAllData(exportLocation):
         timepoint_num += 1
         csv.write('\n')
 
-exportAllData(exportData)
+# Code that runs hill simulations with each Ymax knocked down to user-specified parameter
+def runAutoSensitivity(percentage):
+    for species in node_ID:
+        print(Ymax[species])
 
-# Code to export single species to CSV
-np.savetxt(("Data/"+node_ID[whatToDisplay]+ "_inhibited.csv"), np.transpose([t[:k], yHill_ss[:k,whatToDisplay]]), delimiter=",", header=('time,' + node_ID[whatToDisplay]))
-
-# Code to display graph
-plt.figure(figsize=(12,4))
-plt.subplot(121)
-plt.plot(t[:k], yHill_ss[:k,whatToDisplay], label = node_ID[whatToDisplay])
-plt.legend(loc='best')
-plt.show()
+######################################
+## DISPLAY/EXPORT FUNCS CALLED HERE ##
+######################################
+exportSingleSpecies(whatToExport)
+exportAllData(exportDataLocation)
+printGraph(whatToDisplay)
+######################################
+######################################
