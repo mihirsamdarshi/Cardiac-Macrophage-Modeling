@@ -31,7 +31,7 @@ og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.
 og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xlsx'
 fickstest = '/Users/mihir/Documents/Summer/Models/fickstest.xlsx'
 
-active = macrophage
+active = fickstest
 ######################################
 ######################################
 

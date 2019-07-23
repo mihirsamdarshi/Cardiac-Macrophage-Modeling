@@ -29,9 +29,10 @@ no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibi
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
 og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xlsx'
-fickstest = '/Users/mihir/Documents/Summer/Models/fickstest.xlsx'
+ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
+combined = '/Users/mihir/Documents/Summer/Models/combined_model.xlsx'
 
-active = macrophage
+active = ficks
 ######################################
 ######################################
 
@@ -89,39 +90,43 @@ def get_reactors_for_ficks(reaction):
     return reactors
 
 # activation function as defined by equations in PMID: 21087478
-def Hill(reactor, n, EC50):
+def Hill(reactor, n, EC50, reaction_flux_values):
     # equation 1.3
     B = (EC50**n-1)/(2*EC50**n-1)
     C = (B-1)**(1/n)
         # if the first reactor has the prefix of ! then it is an inhibition reaction
         # equation 1.2
     if reactor[0] == '!':
-        return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
+        reactor_value = reaction_flux_values[reactor[1:]]
+        return (1-B*reactor_value**n)/ (C**n + reactor_value**n)
     else:
-        return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
+        reactor_value = reaction_flux_values[reactor]
+        return (B*reactor_value**n)/ (C**n + reactor_value**n)
 
 
 # returns the rate of change utilizing Ficks Second Law equation
-def Ficks(transIn, transOut):
+def Ficks(transIn, transOut, reaction_flux_values):
     # get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
-    conc_one = globals()['{}'.format(transIn)]
-    conc_two = globals()['{}'.format(transOut)]
+    conc_one = reaction_flux_values[transIn]
+    print(transIn + ": " + str(conc_one))
+    conc_two = reaction_flux_values[transOut]
+    print(transOut + ": " + str(conc_two))
     deltaC = conc_two - conc_one
-    deltaX = 1
-    area = 1
-    dCoef = 0.5
-    rate = dCoef * -area * deltaC / deltaX
-    globals()['{}'.format(transIn)] = globals()['{}'.format(transIn)] - rate
+    print('deltaC: ' + str(deltaC))
+    dCoef = -0.05
+    rate = dCoef * deltaC
+    print('rate: ' + str(rate))
+    reaction_flux_values[transIn] = reaction_flux_values[transIn] - rate
     return rate
 
 # if there are multiple possibilities for activation, this function is used
-def OR(reaction_list):
+def OR(reaction_list, reaction_flux_values):
     tera = (-1)**(len(reaction_list)+1)
     for k in reaction_list:
         weight, n, EC50 = reaction_list[k]
         final = weight
         for j in get_reactors(k):
-            final *= Hill(j, n, EC50)
+            final *= Hill(j, n, EC50, reaction_flux_values)
         tera *= (final-1)
     tera +=1
     return tera
@@ -129,36 +134,51 @@ def OR(reaction_list):
 # returns derivate (rate of change) for each species at each time point
 def inte(state, t, reaction_dict):
     # setter for the state of each node
+    reaction_flux_values = dict()
     for i in range(len(node_ID)):
-        globals()['{}'.format(node_ID[i])] = state[i]
+        reaction_flux_values.update([(node_ID[i], state[i])])
+    print(reaction_flux_values)
     # for every node in the reaction
     for i in range(len(node_ID)):
         # TF represents a base reaction rate (I believe)
         TF = 1
+        print(reaction_flux_values)
         # if there is only one possible reaction
         if len(reaction_dict[node_ID[i]]) == 1:
             # get reaction string
             single_reaction = list(reaction_dict[node_ID[i]].keys())[0]
             # check reaction string and run if it is a Ficks diffusion reaction
             if '===>' in single_reaction:
+                print('Ficks')
                 reactors = get_reactors_for_ficks(single_reaction)
-                rate = Ficks(reactors[0], reactors[1])
-                globals()['{}'.format(node_ID[i] + 'd')] = rate
+                rate = Ficks(reactors[0], reactors[1], reaction_flux_values)
+                print('rate of ' + single_reaction + ': ' + str(rate))
+                current_value = reaction_flux_values[node_ID[i]]
+                print('current value of ' + node_ID[i] + ' : ' + str(current_value))
+                current_value += rate
+                print('after addition ' + node_ID[i] + ' : ' + str(current_value))
+                reaction_flux_values[node_ID[i]] = current_value
             else:
+                print('Hill')
                 # create a list of reactors from the reaction dictonary
                 reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
+                print(reactors)
                 weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
                 # for each inital reactor, get activation function from Hill
                 for j in reactors:
-                    TF *= Hill(j, n, EC50)
+                    TF *= Hill(j, n, EC50, reaction_flux_values)
                 # assignment to derivative of rate of change of node_ID[i]
                 # equation derived from 1.1 from PMID: 21087478
-                globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+                current_value = reaction_flux_values[node_ID[i]]
+                reaction_flux_values[node_ID[i]] = (TF*weight*Ymax[i]-current_value)/tau[i]
         # otherwise, there are two possible reactions
         else:
-            TF = OR(reaction_dict[node_ID[i]])
-            globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    return [globals()['{}'.format(k + 'd')] for k in node_ID]
+            print('hello')
+            current_value = reaction_flux_values[node_ID[i]]
+            TF = OR(reaction_dict[node_ID[i]], reaction_flux_values)
+            reaction_flux_values[node_ID[i]] = (TF*weight*Ymax[i]-current_value)/tau[i]
+    print('\n')
+    return [reaction_flux_values[k] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
     # state0 gets passed into inte() as the value of each species
@@ -170,9 +190,10 @@ def hill_simulation(t, state0, reaction_dict):
 ######################################
 # SET DISPLAY/EXPORT PARAMETERS HERE #
 ######################################
-t = np.arange(0.0, 60, 0.1)
+t = np.arange(0.0, 10, 1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
-whatToDisplay = 1
+whatToDisplay = 0
+whatToDisplayTwo = 1
 whatToExport = 0
 exportDataLocation = "data/allData.csv"
 knockdownPercentage = 0.5
@@ -182,7 +203,7 @@ knockdownPercentage = 0.5
 k = 6000
 
 # Code to display graph
-def printGraph(whatToDisplay, simData):
+def displayGraph(whatToDisplay, simData):
     plt.figure(figsize=(12,4))
     plt.subplot(121)
     plt.plot(t[:k], simData[:k,whatToDisplay], label = node_ID[whatToDisplay])
@@ -193,8 +214,8 @@ def printGraph(whatToDisplay, simData):
 def exportSingleSpecies(whatToExport, simData):
     csvTitle = ("Data/"+ node_ID[whatToExport] + "_inhibited.csv")
     headerTitle = ('time,' + node_ID[whatToExport])
-    dataToPrint = np.transpose([t[:k], simData[:k,whatToExport]])
-    np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
+    data = np.transpose([t[:k], simData[:k,whatToExport]])
+    np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
 
 # Code to export all data to a CSV
 def exportAllData(exportLocation, simData):
@@ -217,7 +238,6 @@ def runAutoSensitivity(knockdownPercentage):
         originalYMax = Ymax[species]
         newYmax = originalYMax * knockdownPercentage
         Ymax[species] = originalYMax * knockdownPercentage
-        print("Species: " + node_ID[species] + ", Ymax:" + str(originalYMax) + ", knockdown Ymax:" + str(Ymax[species]))
         kdData = hill_simulation(t, state0, reaction_dict)
         saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
         exportAllData(saLocation, kdData)
@@ -228,7 +248,8 @@ def runAutoSensitivity(knockdownPercentage):
 ######################################
 # runAutoSensitivity(knockdownPercentage)
 # exportSingleSpecies(whatToExport, yHill_ss)
-exportAllData(exportDataLocation, yHill_ss)
-# printGraph(whatToDisplay)
+# exportAllData(exportDataLocation, yHill_ss)
+# displayGraph(whatToDisplay, yHill_ss)
+# displayGraph(whatToDisplayTwo, yHill_ss)
 ######################################
 ######################################
