@@ -130,8 +130,10 @@ def OR(reaction_list):
 def inte(state, t, reaction_dict):
     # setter for the state of each node
     for i in range(len(node_ID)):
+        reaction_data = dict()
+        reaction_data.update([(node_ID[i], state[i])])
+        print(reaction_data)
         globals()['{}'.format(node_ID[i])] = state[i]
-    print('beginning: ' + str(state))
     # for every node in the reaction
     for i in range(len(node_ID)):
         # TF represents a base reaction rate (I believe)
@@ -144,6 +146,7 @@ def inte(state, t, reaction_dict):
             if '===>' in single_reaction:
                 reactors = get_reactors_for_ficks(single_reaction)
                 rate = Ficks(reactors[0], reactors[1])
+                reaction_data[node_ID[i]] = rate
                 globals()['{}'.format(node_ID[i] + 'd')] = rate
             else:
                 # create a list of reactors from the reaction dictonary
@@ -158,8 +161,8 @@ def inte(state, t, reaction_dict):
         # otherwise, there are two possible reactions
         else:
             TF = OR(reaction_dict[node_ID[i]])
+            reaction_data[node_ID[i]] = (TF*Ymax[i]-reaction_data[node_ID[i]]) / tau[i]
             globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    print('end: ' + str(list(globals()['{}'.format(k + 'd')] for k in node_ID)))
     return [globals()['{}'.format(k + 'd')] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
@@ -175,13 +178,9 @@ def hill_simulation(t, state0, reaction_dict):
 t = np.arange(0.0, 60, 0.1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
 whatToDisplay = 0
-whatToExport = 0
-exportDataLocation = "data/allData_unuinhibited.csv"
-knockdownPercentage = 0.5
 ######################################
 
 # number of timepoints to display
-k = 6000
 
 # Code to display graph
 def printGraph(whatToDisplay, simData):
@@ -191,46 +190,9 @@ def printGraph(whatToDisplay, simData):
     plt.legend(loc='best')
     plt.show()
 
-# Code to export a single species as a CSV
-def exportSingleSpecies(whatToExport, simData):
-    csvTitle = ("Data/"+ node_ID[whatToExport] + "_uninhibited.csv")
-    headerTitle = ('time,' + node_ID[whatToExport])
-    dataToPrint = np.transpose([t[:k], simData[:k,whatToExport]])
-    np.savetxt(csvTitle, dataToPrint, delimiter=",", header=headerTitle)
-
-# Code to export all data to a CSV
-def exportAllData(exportLocation, simData):
-    csv = open(exportLocation, "w")
-    columnTitleRow = "time, "
-    for species in node_ID:
-        columnTitleRow += species + ","
-    csv.write(columnTitleRow + '\n')
-    timepoint_num = 0
-    for timepoint in t.astype(str):
-        csv.write(timepoint + ',')
-        for species in range(len(node_ID)):
-            csv.write(simData[timepoint_num,species].astype(str) + ",")
-        timepoint_num += 1
-        csv.write('\n')
-
-# Code that runs hill simulations with each Ymax knocked down to user-specified parameter
-def runAutoSensitivity(knockdownPercentage):
-    for species in range(len(node_ID)):
-        originalYMax = Ymax[species]
-        newYmax = originalYMax * knockdownPercentage
-        Ymax[species] = originalYMax * knockdownPercentage
-        print("Species: " + node_ID[species] + ", Ymax:" + str(originalYMax) + ", knockdown Ymax:" + str(Ymax[species]))
-        kdData = hill_simulation(t, state0, reaction_dict)
-        saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
-        exportAllData(saLocation, kdData)
-        Ymax[species] = originalYMax
-
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-# runAutoSensitivity(knockdownPercentage)
-# exportSingleSpecies(whatToExport, yHill_ss)
-exportAllData(exportDataLocation, yHill_ss)
 printGraph(whatToDisplay, yHill_ss)
 ######################################
 ######################################
