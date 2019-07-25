@@ -28,10 +28,12 @@ np.seterr(all='warn')
 macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
-og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_fibroblast_model.xls'
-og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_cardiomyocyte_model.xlsx'
 ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
 combined = '/Users/mihir/Documents/Summer/Models/combined_model.xlsx'
+og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx'
+new_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/new_fibroblast_model.xlsx'
+og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx'
+
 
 active = combined
 ######################################
