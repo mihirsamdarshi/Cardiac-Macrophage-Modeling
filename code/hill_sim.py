@@ -31,10 +31,11 @@ step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
 ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
 combined = '/Users/mihir/Documents/Summer/Models/macrophage_fibroblast_combined.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx'
-new_fibroblast = '/System/Volumes/Data/Users/mihir/Library/CloudStorage/iCloud Drive/Documents/Summer/Models/original_models/new_fibroblast.xlsx'
+new_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/new_fibroblast.xlsx'
 og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx'
+arieltest = '/Users/mihir/Desktop/fibmodelnogenes.xlsx'
 
-active = new_fibroblast
+active = arieltest
 ######################################
 ######################################
 
@@ -54,6 +55,7 @@ tau = species['tau'].tolist()
 # create a dictionary of all the reactions
 reaction_dict = collections.defaultdict(dict)
 for k in range(len(reactions)):
+    print(reactions.loc[k, 'Rule'])
     node = reactions.loc[k, 'Rule'].split(' ')
     reaction_dict[node[-1]][reactions.loc[k, 'Rule']] = reactions.loc[k, ['Weight', 'n', 'EC50']].tolist()
 
@@ -101,7 +103,6 @@ def Hill(reactor, n, EC50):
     if reactor[0] == '!':
         print(reactor + ': ')
         print((1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n)))
-        print('\n')
         return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
     else:
         return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
@@ -151,6 +152,7 @@ def inte(state, t, reaction_dict):
                 rate = Ficks(reactors[0], reactors[1])
                 globals()['{}'.format(node_ID[i] + 'd')] = rate
             else:
+                TF = 1
                 # create a list of reactors from the reaction dictonary
                 reactors = get_reactors(list(reaction_dict[node_ID[i]].keys())[0])
                 weight, n, EC50 = reaction_dict[node_ID[i]][list(reaction_dict[node_ID[i]].keys())[0]]
@@ -178,7 +180,7 @@ def hill_simulation(t, state0, reaction_dict):
 ######################################
 t = np.arange(0.0, 60, 0.1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
-whatToDisplay = 10
+whatToDisplay = 66
 whatToDisplayTwo = 24
 whatToDisplayThree = 25
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
@@ -237,6 +239,6 @@ def runAutoSensitivity(knockdownPercentage):
 # runAutoSensitivity(knockdownPercentage)
 # exportSingleSpecies(whatToExport, yHill_ss)
 # exportAllData(exportDataLocation, yHill_ss)
-displayGraph(whatToDisplay, yHill_ss)
+displayGraph(66, yHill_ss)
 displayGraph(whatToDisplayTwo, yHill_ss)######################################
 ######################################
