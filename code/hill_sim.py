@@ -174,10 +174,11 @@ def hill_simulation(t, state0, reaction_dict):
 ######################################
 t = np.arange(0.0, 60, 0.1)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
-whatToDisplay = 11
-whatToDisplayTwo = 80
-whatToExport = 0
-exportDataLocation = "data/allData.csv"
+whatToDisplay = 10
+whatToDisplayTwo = 24
+whatToDisplayThree = 25
+whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
+exportDataLocation = "data/combined_withcpd43.csv"
 knockdownPercentage = 0.5
 ######################################
 
@@ -194,10 +195,11 @@ def displayGraph(whatToDisplay, simData):
 
 # Code to export a single species as a CSV
 def exportSingleSpecies(whatToExport, simData):
-    csvTitle = ("Data/"+ node_ID[whatToExport] + "_inhibited.csv")
-    headerTitle = ('time,' + node_ID[whatToExport])
-    data = np.transpose([t[:k], simData[:k,whatToExport]])
-    np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
+    for eachSpecies in whatToExport:
+        csvTitle = ("data/"+ node_ID[eachSpecies] + "_with_cpd43.csv")
+        headerTitle = ('time,' + node_ID[eachSpecies])
+        data = np.transpose([t[:k], simData[:k, eachSpecies]])
+        np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
 
 # Code to export all data to a CSV
 def exportAllData(exportLocation, simData):
@@ -233,5 +235,6 @@ def runAutoSensitivity(knockdownPercentage):
 # exportAllData(exportDataLocation, yHill_ss)
 displayGraph(whatToDisplay, yHill_ss)
 displayGraph(whatToDisplayTwo, yHill_ss)
+displayGraph(whatToDisplayThree, yHill_ss)
 ######################################
 ######################################
