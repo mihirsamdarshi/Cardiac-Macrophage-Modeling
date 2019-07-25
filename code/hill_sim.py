@@ -29,13 +29,12 @@ macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
 no_inhibition = '/Users/mihir/Documents/Summer/Models/macrophage_model_no_inhibition.xlsx'
 step_by_step = '/Users/mihir/Documents/Summer/Models/step_by_step_model.xlsx'
 ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
-combined = '/Users/mihir/Documents/Summer/Models/combined_model.xlsx'
+combined = '/Users/mihir/Documents/Summer/Models/macrophage_fibroblast_combined.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx'
-new_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/new_fibroblast_model.xlsx'
+new_fibroblast = '/System/Volumes/Data/Users/mihir/Library/CloudStorage/iCloud Drive/Documents/Summer/Models/original_models/new_fibroblast.xlsx'
 og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx'
 
-
-active = combined
+active = new_fibroblast
 ######################################
 ######################################
 
@@ -100,6 +99,9 @@ def Hill(reactor, n, EC50):
         # if the first reactor has the prefix of ! then it is an inhibition reaction
         # equation 1.2
     if reactor[0] == '!':
+        print(reactor + ': ')
+        print((1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n)))
+        print('\n')
         return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
     else:
         return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
@@ -236,7 +238,5 @@ def runAutoSensitivity(knockdownPercentage):
 # exportSingleSpecies(whatToExport, yHill_ss)
 # exportAllData(exportDataLocation, yHill_ss)
 displayGraph(whatToDisplay, yHill_ss)
-displayGraph(whatToDisplayTwo, yHill_ss)
-displayGraph(whatToDisplayThree, yHill_ss)
-######################################
+displayGraph(whatToDisplayTwo, yHill_ss)######################################
 ######################################
