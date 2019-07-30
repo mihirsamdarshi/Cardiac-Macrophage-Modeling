@@ -22,19 +22,19 @@ import seaborn as sns
 import ntpath
 import os
 sns.set()
-np.seterr(all='warn')
+np.seterr(all="warn")
 
 ######################################
 # SET THE EXCEL SHEET HERE #
 ######################################
-macrophage = '/Users/mihir/Documents/Summer/Models/experimental_models/macrophage_model.xlsx'
-combined_with_cpd43 = '/Users/mihir/Documents/Summer/Models/experimental_models/combined_model_with_cpd43.xlsx'
-combined_without_cpd43 = '/Users/mihir/Documents/Summer/Models/experimental_models/combined_model_without_cpd43.xlsx'
-og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx'
-og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx'
-ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
+macrophage = "/Users/mihir/Documents/Summer/Models/experimental_models/macrophage_model.xlsx"
+combined_with_cpd43 = "/Users/mihir/Documents/Summer/Models/experimental_models/combined_model_with_cpd43.xlsx"
+combined_without_cpd43 = "/Users/mihir/Documents/Summer/Models/experimental_models/combined_model_without_cpd43.xlsx"
+og_fibroblast = "/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx"
+og_cardiomyocyte = "/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx"
+ficks = "/Users/mihir/Documents/Summer/Models/ficks.xlsx"
 
-active = combined_without_cpd43
+active = combined_with_cpd43
 ######################################
 ######################################
 
@@ -43,27 +43,27 @@ active = combined_without_cpd43
 ######################################
 reactions = pd.read_excel(active, sheet_name = 1, skiprows = 1, header = 0)
 species = pd.read_excel(active, sheet_name = 0, skiprows = 1, header = 0)
-pmid = reactions['PMID'].tolist()
-reactions = reactions[['Rule', 'Weight', 'n', 'EC50']]
-species = species[['ID', 'Yinit', 'Ymax', 'tau']]
-node_ID = species['ID'].tolist()
-Yinit = species['Yinit'].tolist()
-Ymax = species['Ymax'].tolist()
-Ymax2 = species['Ymax'].tolist()
-tau = species['tau'].tolist()
+pmid = reactions["PMID"].tolist()
+reactions = reactions[["Rule", "Weight", "n", "EC50"]]
+species = species[["ID", "Yinit", "Ymax", "tau"]]
+node_ID = species["ID"].tolist()
+Yinit = species["Yinit"].tolist()
+Ymax = species["Ymax"].tolist()
+Ymax2 = species["Ymax"].tolist()
+tau = species["tau"].tolist()
 
 #
 # # create a dictionary of all the reactions
 # reaction_dict = collections.defaultdict(dict)
 # for k in range(len(reactions)):
-#     print(reactions.loc[k, 'Rule'])
-#     node = reactions.loc[k, 'Rule'].split(' ')
-#     reaction_dict[node[-1]][reactions.loc[k, 'Rule']] = reactions.loc[k, ['Weight', 'n', 'EC50']].tolist()
+#     print(reactions.loc[k, "Rule"])
+#     node = reactions.loc[k, "Rule"].split(" ")
+#     reaction_dict[node[-1]][reactions.loc[k, "Rule"]] = reactions.loc[k, ["Weight", "n", "EC50"]].tolist()
 #
 # # create a dictionary of all the species
 # species_dict = dict()
 # for k in range(len(species)):
-#     species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
+#     species_dict[species.loc[k, "ID"]] = species.loc[k, ["Yinit", "Ymax", "tau"]].tolist()
 #
 # # read and set the initial state based on Yinit from Excel sheet
 # state0 = []
@@ -75,22 +75,22 @@ tau = species['tau'].tolist()
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
 ######################################
-# this function splits each reaction into it's individual reactors, and returns an array with each reaction's
+# this function splits each reaction into it"s individual reactors, and returns an array with each reaction"s
 # reactors in an array (I believe)
 def get_reactors(reaction):
-    reac_split = reaction.split(' ')
+    reac_split = reaction.split(" ")
     reactors = []
     for k in reac_split:
-        if k != '&' and k != '=>':
+        if k != "&" and k != "=>":
             reactors.append(k)
     return reactors[:-1]
 
 # returns both reactors, unlike above function because Ficks requires the concentration of both species
 def get_reactors_for_ficks(reaction):
-    reac_split = reaction.split(' ')
+    reac_split = reaction.split(" ")
     reactors = []
     for k in reac_split:
-        if k != '&' and k != '=>' and k != '===>':
+        if k != "&" and k != "=>" and k != "===>":
             reactors.append(k)
     return reactors
 
@@ -101,21 +101,21 @@ def Hill(reactor, n, EC50):
     C = (B-1)**(1/n)
         # if the first reactor has the prefix of ! then it is an inhibition reaction
         # equation 1.2
-    if reactor[0] == '!':
-        return (1-B*globals()['{}'.format(reactor[1:])]**n/(C**n + globals()['{}'.format(reactor[1:])]**n))
+    if reactor[0] == "!":
+        return (1-B*globals()["{}".format(reactor[1:])]**n/(C**n + globals()["{}".format(reactor[1:])]**n))
     else:
-        return B*globals()['{}'.format(reactor)]**n/(C**n + globals()['{}'.format(reactor)]**n)
+        return B*globals()["{}".format(reactor)]**n/(C**n + globals()["{}".format(reactor)]**n)
 
 
 # returns the rate of change utilizing Ficks Second Law equation
 def Ficks(transIn, transOut):
     # get C1 to be number of molecules of first species, C2 is number of molecule of second species in reaction
-    conc_one = globals()['{}'.format(transIn)]
-    conc_two = globals()['{}'.format(transOut)]
+    conc_one = globals()["{}".format(transIn)]
+    conc_two = globals()["{}".format(transOut)]
     deltaC = conc_two - conc_one
     dCoef = -0.05
     rate = dCoef * deltaC
-    globals()['{}'.format(transIn)] = globals()['{}'.format(transIn)] - rate
+    globals()["{}".format(transIn)] = globals()["{}".format(transIn)] - rate
     return rate
 
 # if there are multiple possibilities for activation, this function is used
@@ -134,7 +134,7 @@ def OR(reaction_list):
 def inte(state, t, reaction_dict):
     # setter for the state of each node
     for i in range(len(node_ID)):
-        globals()['{}'.format(node_ID[i])] = state[i]
+        globals()["{}".format(node_ID[i])] = state[i]
     # for every node in the reaction
     for i in range(len(node_ID)):
         # TF represents a base reaction rate (I believe)
@@ -144,10 +144,10 @@ def inte(state, t, reaction_dict):
             # get reaction string
             single_reaction = list(reaction_dict[node_ID[i]].keys())[0]
             # check reaction string and run if it is a Ficks diffusion reaction
-            if '===>' in single_reaction:
+            if "===>" in single_reaction:
                 reactors = get_reactors_for_ficks(single_reaction)
                 rate = Ficks(reactors[0], reactors[1])
-                globals()['{}'.format(node_ID[i] + 'd')] = rate
+                globals()["{}".format(node_ID[i] + "d")] = rate
             else:
                 TF = 1
                 # create a list of reactors from the reaction dictonary
@@ -158,18 +158,18 @@ def inte(state, t, reaction_dict):
                     TF *= Hill(j, n, EC50)
                 # assignment to derivative of rate of change of node_ID[i]
                 # equation derived from 1.1 from PMID: 21087478
-                globals()['{}'.format(node_ID[i] + 'd')] = (TF*weight*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
+                globals()["{}".format(node_ID[i] + "d")] = (TF*weight*Ymax[i]-globals()["{}".format(node_ID[i])])/tau[i]
         # otherwise, there are two possible reactions
         else:
             TF = OR(reaction_dict[node_ID[i]])
-            globals()['{}'.format(node_ID[i] + 'd')] = (TF*Ymax[i]-globals()['{}'.format(node_ID[i])])/tau[i]
-    return [globals()['{}'.format(k + 'd')] for k in node_ID]
+            globals()["{}".format(node_ID[i] + "d")] = (TF*Ymax[i]-globals()["{}".format(node_ID[i])])/tau[i]
+    return [globals()["{}".format(k + "d")] for k in node_ID]
 
 def hill_simulation(t, state0, reaction_dict):
     # state0 gets passed into inte() as the value of each species
     # odeint calls inte() for as many timepoints as t specifies
     yHill_ss = odeint(inte, state0, t, args = (reaction_dict,))
-    print('Hill Finished\n')
+    print("Hill Finished\n")
     return yHill_ss
 
 ###################-------------------------------###################
@@ -178,14 +178,14 @@ def hill_simulation(t, state0, reaction_dict):
 
 reaction_dict = collections.defaultdict(dict)
 for k in range(len(reactions)):
-    node = reactions.loc[k, 'Rule'].split(' ')
-    reaction_dict[node[-1]][reactions.loc[k, 'Rule']] = reactions.loc[k, ['Weight', 'n', 'EC50']].tolist()
+    node = reactions.loc[k, "Rule"].split(" ")
+    reaction_dict[node[-1]][reactions.loc[k, "Rule"]] = reactions.loc[k, ["Weight", "n", "EC50"]].tolist()
 
 
 species_dict = dict()
 for k in range(len(species)):
-    #lis = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
-    species_dict[species.loc[k, 'ID']] = species.loc[k, ['Yinit', 'Ymax', 'tau']].tolist()
+    #lis = species.loc[k, ["Yinit", "Ymax", "tau"]].tolist()
+    species_dict[species.loc[k, "ID"]] = species.loc[k, ["Yinit", "Ymax", "tau"]].tolist()
 
 state0 = []
 for k in range(len(node_ID)):
@@ -199,7 +199,7 @@ yHill_ss = hill_simulation(t, state0, reaction_dict)
 whatToDisplay = 49
 whatToDisplayTwo = 50
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
-exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0])))
+exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
 knockdownPercentage = 0.5
 ######################################
 
@@ -211,10 +211,10 @@ def displayGraph(indexOne, indexTwo, simData):
     plt.figure(figsize=(12,4))
     plt.subplot(121)
     plt.plot(t[:k], yHill_ss[:k,indexOne], label = node_ID[indexOne])
-    plt.legend(loc='best')
+    plt.legend(loc="best")
     plt.subplot(122)
     plt.plot(t[:k], yHill_ss[:k,indexTwo], label = node_ID[indexTwo])
-    plt.legend(loc='best')
+    plt.legend(loc="best")
     plt.show()
 
 #
@@ -222,7 +222,7 @@ def displayGraph(indexOne, indexTwo, simData):
 # def exportSingleSpecies(whatToExport, simData):
 #     for eachSpecies in whatToExport:
 #         csvTitle = ("data/"+ node_ID[eachSpecies] + "_with_cpd43.csv")
-#         headerTitle = ('time,' + node_ID[eachSpecies])
+#         headerTitle = ("time," + node_ID[eachSpecies])
 #         data = np.transpose([t[:k], simData[:k, eachSpecies]])
 #         np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
 #
@@ -232,14 +232,14 @@ def exportAllData(exportLocation, simData):
     columnTitleRow = "time, "
     for species in node_ID:
         columnTitleRow += species + ","
-    csv.write(columnTitleRow + '\n')
+    csv.write(columnTitleRow + "\n")
     timepoint_num = 0
     for timepoint in t.astype(str):
-        csv.write(timepoint + ',')
+        csv.write(timepoint + ",")
         for species in range(len(node_ID)):
             csv.write(simData[timepoint_num,species].astype(str) + ",")
         timepoint_num += 1
-        csv.write('\n')
+        csv.write("\n")
 #
 # # Code that runs hill simulations with each Ymax knocked down to user-specified parameter
 # def runAutoSensitivity(knockdownPercentage):
