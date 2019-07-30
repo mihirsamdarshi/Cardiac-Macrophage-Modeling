@@ -19,6 +19,8 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+import ntpath
+import os
 sns.set()
 np.seterr(all='warn')
 
@@ -26,12 +28,13 @@ np.seterr(all='warn')
 # SET THE EXCEL SHEET HERE #
 ######################################
 macrophage = '/Users/mihir/Documents/Summer/Models/macrophage_model.xlsx'
-combined = '/Users/mihir/Documents/Summer/Models/combined_model.xlsx'
+combined_with_cpd43 = '/Users/mihir/Documents/Summer/Models/combined_model_with_cpd43.xlsx'
+combined_without_cpd43 = '/Users/mihir/Documents/Summer/Models/combined_model_without_cpd43.xlsx'
 og_fibroblast = '/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx'
 og_cardiomyocyte = '/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx'
 ficks = '/Users/mihir/Documents/Summer/Models/ficks.xlsx'
 
-active = combined
+active = combined_without_cpd43
 ######################################
 ######################################
 
@@ -195,9 +198,8 @@ t = np.arange(0.0, 100, 0.01)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
 whatToDisplay = 49
 whatToDisplayTwo = 50
-whatToDisplayThree = 39
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
-exportDataLocation = "../data/combined_withcpd43.csv"
+exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0])))
 knockdownPercentage = 0.5
 ######################################
 
@@ -205,7 +207,7 @@ knockdownPercentage = 0.5
 k = 10000
 
 # Code to display graph
-def displayGraph(indexOne, indexTwo, indexThree, simData):
+def displayGraph(indexOne, indexTwo, simData):
     plt.figure(figsize=(12,4))
     plt.subplot(121)
     plt.plot(t[:k], yHill_ss[:k,indexOne], label = node_ID[indexOne])
