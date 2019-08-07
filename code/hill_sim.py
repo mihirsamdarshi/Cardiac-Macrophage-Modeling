@@ -175,6 +175,7 @@ for k in range(len(node_ID)):
 ######################################
 t = np.arange(0.0, 100, 0.01)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
+numberTimepointsToDisplay = 10000
 speciesToDisplay = 0
 speciesToDisplayTwo = 49
 speciesToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
@@ -184,9 +185,6 @@ exportAllDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(ac
 exportSensitivityAnalysisDataLocation = "../data/sensitivity_analysis/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_raw_sa_data.csv"
 knockdownPercentage = 0.1
 ######################################
-
-# number of timepoints to display
-k = 10000
 
 # Code to display graph
 def displayGraph(indexOne, indexTwo, simData):
