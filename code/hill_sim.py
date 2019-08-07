@@ -22,7 +22,6 @@ import seaborn as sns
 import ntpath
 import os
 sns.set()
-np.seterr(all="warn")
 
 ######################################
 # SET THE EXCEL SHEET HERE #
@@ -34,7 +33,7 @@ og_fibroblast = "/Users/mihir/Documents/Summer/Models/original_models/original_f
 og_cardiomyocyte = "/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx"
 ficks = "/Users/mihir/Documents/Summer/Models/ficks.xlsx"
 
-active = combined_with_cpd43
+active = combined_without_cpd43
 ######################################
 ######################################
 
@@ -51,26 +50,6 @@ Yinit = species["Yinit"].tolist()
 Ymax = species["Ymax"].tolist()
 Ymax2 = species["Ymax"].tolist()
 tau = species["tau"].tolist()
-
-#
-# # create a dictionary of all the reactions
-# reaction_dict = collections.defaultdict(dict)
-# for k in range(len(reactions)):
-#     print(reactions.loc[k, "Rule"])
-#     node = reactions.loc[k, "Rule"].split(" ")
-#     reaction_dict[node[-1]][reactions.loc[k, "Rule"]] = reactions.loc[k, ["Weight", "n", "EC50"]].tolist()
-#
-# # create a dictionary of all the species
-# species_dict = dict()
-# for k in range(len(species)):
-#     species_dict[species.loc[k, "ID"]] = species.loc[k, ["Yinit", "Ymax", "tau"]].tolist()
-#
-# # read and set the initial state based on Yinit from Excel sheet
-# state0 = []
-# for k in range(len(node_ID)):
-#     state0.append(Yinit[k])  #solve_ivp
-# ############################
-# ############################
 
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
@@ -196,11 +175,12 @@ for k in range(len(node_ID)):
 ######################################
 t = np.arange(0.0, 100, 0.01)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
-whatToDisplay = 49
-whatToDisplayTwo = 50
+whatToDisplay = 0
+whatToDisplayTwo = 49
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
+timepointToExport = 1000
 exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
-knockdownPercentage = 0.5
+knockdownPercentage = 0.1
 ######################################
 
 # number of timepoints to display
@@ -217,15 +197,14 @@ def displayGraph(indexOne, indexTwo, simData):
     plt.legend(loc="best")
     plt.show()
 
-#
-# # Code to export a single species as a CSV
-# def exportSingleSpecies(whatToExport, simData):
-#     for eachSpecies in whatToExport:
-#         csvTitle = ("data/"+ node_ID[eachSpecies] + "_with_cpd43.csv")
-#         headerTitle = ("time," + node_ID[eachSpecies])
-#         data = np.transpose([t[:k], simData[:k, eachSpecies]])
-#         np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
-#
+# Code to export a single species as a CSV
+def exportSingleSpecies(whatToExport, simData):
+    for eachSpecies in whatToExport:
+        csvTitle = ("data/"+ node_ID[eachSpecies] + "_with_cpd43.csv")
+        headerTitle = ("time," + node_ID[eachSpecies])
+        data = np.transpose([t[:k], simData[:k, eachSpecies]])
+        np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
+
 # Code to export all data to a CSV
 def exportAllData(exportLocation, simData):
     csv = open(exportLocation, "w")
@@ -240,23 +219,60 @@ def exportAllData(exportLocation, simData):
             csv.write(simData[timepoint_num,species].astype(str) + ",")
         timepoint_num += 1
         csv.write("\n")
-#
+
+# Code to export a given time point of a simulation
+def exportLastTimePoint(exportLocation, simData, timepoint):
+    csv = open(exportLocation, "w")
+    csv.write("species, data")
+    csv.write("\n")
+    for species in range(len(node_ID)):
+        csv.write(node_ID[species] + ",")
+        csv.write(simData[timepoint,species].astype(str) + ",")
+        csv.write("\n")
+
+# The following functions are written as helper functions for the runAutoSensitivity function
+def exportControlLastTimepoint(exportLocation, simData):
+    csv = open(exportLocation, "w")
+    csv.write("species, control")
+    csv.write("\n")
+    for species in range(len(node_ID)):
+        csv.write(node_ID[species] + ",")
+        csv.write(simData[1000,species].astype(str) + ",")
+        csv.write("\n")
+
+def exportForSensitivity(exportLocation, simData, knockdownSpecies):
+    exportData = pd.read_csv(exportLocation)
+    exportData.set_index('species', inplace=True)
+    appendList = addValuesToList(simData)
+    exportData[str(node_ID[knockdownSpecies])] = appendList
+    exportData.to_csv(exportLocation)
+    print(exportData)
+
+def addValuesToList(simData):
+    list = []
+    for species in range(len(node_ID)):
+        list.append(simData[1000,species])
+    return list
+
 # # Code that runs hill simulations with each Ymax knocked down to user-specified parameter
-# def runAutoSensitivity(knockdownPercentage):
-#     for species in range(len(node_ID)):
-#         originalYMax = Ymax[species]
-#         newYmax = originalYMax * knockdownPercentage
-#         Ymax[species] = originalYMax * knockdownPercentage
-#         kdData = hill_simulation(t, state0, reaction_dict)
-#         saLocation = "data/sensitivity_analysis/sa_" + str(knockdownPercentage) + "_" +  node_ID[species] + ".csv"
-#         exportAllData(saLocation, kdData)
-#         Ymax[species] = originalYMax
-#
+def runAutoSensitivity(knockdownPercentage):
+    saLocation = "../data/sensitivity_analysis/sa_experimental.csv"
+    controlSim = hill_simulation(t, state0, reaction_dict)
+    exportControlLastTimepoint(saLocation, controlSim)
+    for species in range(len(node_ID)):
+        originalYMax = Ymax[species]
+        newYmax = originalYMax * knockdownPercentage
+        Ymax[species] = originalYMax * knockdownPercentage
+        kdData = hill_simulation(t, state0, reaction_dict)
+        exportForSensitivity(saLocation, kdData, species)
+        Ymax[species] = originalYMax
+
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
 # runAutoSensitivity(knockdownPercentage)
+# exportLastTimePoint(exportDataLocation, yHill_ss, timepointToExport)
 # exportSingleSpecies(whatToExport, yHill_ss)
 exportAllData(exportDataLocation, yHill_ss)
-displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
+# displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
 ######################################
