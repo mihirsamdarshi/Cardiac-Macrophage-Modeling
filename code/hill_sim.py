@@ -54,7 +54,7 @@ tau = species["tau"].tolist()
 ######################################
 ###### SIMULATOR FUNCTIONS HERE ######
 ######################################
-# this function splits each reaction into it"s individual reactors, and returns an array with each reaction"s
+# this function splits each reaction into it"s individual reactors, and returns an array with each reaction's
 # reactors in an array (I believe)
 def get_reactors(reaction):
     reac_split = reaction.split(" ")
@@ -180,8 +180,7 @@ whatToDisplayTwo = 49
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
 timepointToExport = 1000
 exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
-exportSensitivityAnalysisDataLocation = "../data/sensitivity_analysis/"
-    + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_raw_sa_data.csv"
+exportSensitivityAnalysisDataLocation = "../data/sensitivity_analysis/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_raw_sa_data.csv"
 knockdownPercentage = 0.1
 ######################################
 
@@ -246,16 +245,11 @@ def exportControlLastTimepoint(exportLocation, simData):
 def exportForSensitivity(exportLocation, simData, knockdownSpecies):
     exportData = pd.read_csv(exportLocation)
     exportData.set_index('index', inplace=True)
-    appendList = addValuesToList(simData)
-    exportData[str(node_ID[knockdownSpecies])] = appendList
-    exportData.to_csv(exportLocation)
-
-# Code to append simulation data to a list so that it can be written to the pandas DataFrame
-def addValuesToList(simData):
-    list = []
+    currentSimData = []
     for species in range(len(node_ID)):
-        list.append(simData[1000,species])
-    return list
+        currentSimData.append(simData[1000,species])
+    exportData[str(node_ID[knockdownSpecies])] = currentSimData
+    exportData.to_csv(exportLocation)
 
 # Code that runs hill simulations with each Ymax knocked down to user-specified parameter, with an initial control
 # simulation with no parameters changed
