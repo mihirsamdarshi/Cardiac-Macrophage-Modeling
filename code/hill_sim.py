@@ -31,7 +31,7 @@ combined_with_cpd43 = "/Users/mihir/Documents/Summer/Models/experimental_models/
 combined_without_cpd43 = "/Users/mihir/Documents/Summer/Models/experimental_models/combined_model_without_cpd43.xlsx"
 og_fibroblast = "/Users/mihir/Documents/Summer/Models/original_models/original_fibroblast_model.xlsx"
 og_cardiomyocyte = "/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx"
-ficks = "/Users/mihir/Documents/Summer/Models/ficks.xlsx"
+ficks = "/Users/mihir/Documents/Summer/Models/combined_without_cpd43/ficks.xlsx"
 
 active = combined_without_cpd43
 ######################################
