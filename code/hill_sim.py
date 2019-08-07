@@ -267,9 +267,9 @@ def runAutoSensitivity(knockdownPercentage, saLocation):
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-runAutoSensitivity(knockdownPercentage, exportSensitivityAnalysisDataLocation)
-# exportCertainTimePoint(exportDataLocation, yHill_ss, timepointToExport)
 # exportSingleSpecies(whatToExport, yHill_ss)
 # exportAllData(exportDataLocation, yHill_ss)
+# exportCertainTimePoint(exportDataLocation, yHill_ss, timepointToExport)
 # displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
+runAutoSensitivity(knockdownPercentage, exportSensitivityAnalysisDataLocation)
 ######################################
