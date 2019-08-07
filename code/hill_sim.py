@@ -33,7 +33,7 @@ og_fibroblast = "/Users/mihir/Documents/Summer/Models/original_models/original_f
 og_cardiomyocyte = "/Users/mihir/Documents/Summer/Models/original_models/original_cardiomyocyte_model.xlsx"
 ficks = "/Users/mihir/Documents/Summer/Models/combined_without_cpd43/ficks.xlsx"
 
-active = combined_without_cpd43
+active = macrophage
 ######################################
 ######################################
 
@@ -180,6 +180,8 @@ whatToDisplayTwo = 49
 whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
 timepointToExport = 1000
 exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
+exportSensitivityAnalysisDataLocation = "../data/sensitivity_analysis/"
+    + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_raw_sa_data.csv"
 knockdownPercentage = 0.1
 ######################################
 
@@ -231,32 +233,33 @@ def exportLastTimePoint(exportLocation, simData, timepoint):
         csv.write("\n")
 
 # The following functions are written as helper functions for the runAutoSensitivity function
+# Code to write an initial control to the specified export location
 def exportControlLastTimepoint(exportLocation, simData):
     csv = open(exportLocation, "w")
-    csv.write("species, control")
+    csv.write("index, species, control")
     csv.write("\n")
     for species in range(len(node_ID)):
-        csv.write(node_ID[species] + ",")
-        csv.write(simData[1000,species].astype(str) + ",")
+        csv.write(str(species) + "," + node_ID[species] + "," + simData[1000,species].astype(str) + ",")
         csv.write("\n")
 
+# Code to write additional species' data to the csv
 def exportForSensitivity(exportLocation, simData, knockdownSpecies):
     exportData = pd.read_csv(exportLocation)
-    exportData.set_index('species', inplace=True)
+    exportData.set_index('index', inplace=True)
     appendList = addValuesToList(simData)
     exportData[str(node_ID[knockdownSpecies])] = appendList
     exportData.to_csv(exportLocation)
-    print(exportData)
 
+# Code to append simulation data to a list so that it can be written to the pandas DataFrame
 def addValuesToList(simData):
     list = []
     for species in range(len(node_ID)):
         list.append(simData[1000,species])
     return list
 
-# # Code that runs hill simulations with each Ymax knocked down to user-specified parameter
-def runAutoSensitivity(knockdownPercentage):
-    saLocation = "../data/sensitivity_analysis/sa_experimental.csv"
+# Code that runs hill simulations with each Ymax knocked down to user-specified parameter, with an initial control
+# simulation with no parameters changed
+def runAutoSensitivity(knockdownPercentage, saLocation):
     controlSim = hill_simulation(t, state0, reaction_dict)
     exportControlLastTimepoint(saLocation, controlSim)
     for species in range(len(node_ID)):
@@ -270,9 +273,9 @@ def runAutoSensitivity(knockdownPercentage):
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-# runAutoSensitivity(knockdownPercentage)
+runAutoSensitivity(knockdownPercentage, exportSensitivityAnalysisDataLocation)
 # exportLastTimePoint(exportDataLocation, yHill_ss, timepointToExport)
 # exportSingleSpecies(whatToExport, yHill_ss)
-exportAllData(exportDataLocation, yHill_ss)
+# exportAllData(exportDataLocation, yHill_ss)
 # displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
 ######################################
