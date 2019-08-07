@@ -175,11 +175,12 @@ for k in range(len(node_ID)):
 ######################################
 t = np.arange(0.0, 100, 0.01)
 yHill_ss = hill_simulation(t, state0, reaction_dict)
-whatToDisplay = 0
-whatToDisplayTwo = 49
-whatToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
+speciesToDisplay = 0
+speciesToDisplayTwo = 49
+speciesToExport = [10, 24, 25, 48, 49, 50, 55, 56, 57, 115, 116, 117]
 timepointToExport = 1000
-exportDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
+exportSingleSpeciesDataLocation = "../data/"
+exportAllDataLocation = "../data/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_alldata.csv"
 exportSensitivityAnalysisDataLocation = "../data/sensitivity_analysis/" + str(ntpath.basename(str(os.path.splitext(active)[0]))) + "_raw_sa_data.csv"
 knockdownPercentage = 0.1
 ######################################
@@ -201,7 +202,7 @@ def displayGraph(indexOne, indexTwo, simData):
 # Code to export a single species as a CSV
 def exportSingleSpecies(whatToExport, simData):
     for eachSpecies in whatToExport:
-        csvTitle = ("data/"+ node_ID[eachSpecies] + "_with_cpd43.csv")
+        csvTitle = (exportSingleSpeciesDataLocation + node_ID[eachSpecies])
         headerTitle = ("time," + node_ID[eachSpecies])
         data = np.transpose([t[:k], simData[:k, eachSpecies]])
         np.savetxt(csvTitle, data, delimiter=",", header=headerTitle)
@@ -267,9 +268,9 @@ def runAutoSensitivity(knockdownPercentage, saLocation):
 ######################################
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
-# exportSingleSpecies(whatToExport, yHill_ss)
+# exportSingleSpecies(exportSingleSpeciesDataLocation, yHill_ss, speciesToExport)
 # exportAllData(exportDataLocation, yHill_ss)
 # exportCertainTimePoint(exportDataLocation, yHill_ss, timepointToExport)
-# displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
+# displayGraph(speciesToDisplay, speciesToDisplayTwo, yHill_ss)
 runAutoSensitivity(knockdownPercentage, exportSensitivityAnalysisDataLocation)
 ######################################
