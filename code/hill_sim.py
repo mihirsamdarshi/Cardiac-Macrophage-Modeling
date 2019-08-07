@@ -222,7 +222,7 @@ def exportAllData(exportLocation, simData):
         csv.write("\n")
 
 # Code to export a given time point of a simulation
-def exportLastTimePoint(exportLocation, simData, timepoint):
+def exportCertainTimePoint(exportLocation, simData, timepoint):
     csv = open(exportLocation, "w")
     csv.write("species, data")
     csv.write("\n")
@@ -268,7 +268,7 @@ def runAutoSensitivity(knockdownPercentage, saLocation):
 ## DISPLAY/EXPORT FUNCS CALLED HERE ##
 ######################################
 runAutoSensitivity(knockdownPercentage, exportSensitivityAnalysisDataLocation)
-# exportLastTimePoint(exportDataLocation, yHill_ss, timepointToExport)
+# exportCertainTimePoint(exportDataLocation, yHill_ss, timepointToExport)
 # exportSingleSpecies(whatToExport, yHill_ss)
 # exportAllData(exportDataLocation, yHill_ss)
 # displayGraph(whatToDisplay, whatToDisplayTwo, yHill_ss)
